@@ -5,6 +5,7 @@ import puppeteer from "puppeteer";
 
 const app = express();
 
+// Launch browser and page
 const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
 });
