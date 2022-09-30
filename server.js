@@ -1,8 +1,14 @@
 import express from "express";
 import cors from "cors";
 import getPagesAvgPrice from "./lib/puppeteer/getPagesAvgPrice.js";
+import puppeteer from "puppeteer";
 
 const app = express();
+
+const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+});
+const page = await browser.newPage();
 
 // Heroku Port
 const PORT = process.env.PORT || 3000;
@@ -30,7 +36,11 @@ app.get("/:maxPages/:search", async (req, res) => {
         }
 
         // Calculate average price
-        const averagePrice = await getPagesAvgPrice(search, parseInt(maxPages));
+        const averagePrice = await getPagesAvgPrice(
+            page,
+            search,
+            parseInt(maxPages)
+        );
         res.json({ message: "Yay", averagePrice });
         return;
     } catch (e) {
