@@ -13,7 +13,11 @@ npm install
 ```
 
 4. Run command:
-   npm run dev
+
+```
+npm run dev
+```
+
 5. Server runs on "http://localhost:5000".
 
 ## Note

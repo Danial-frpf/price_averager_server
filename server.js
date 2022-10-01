@@ -38,6 +38,11 @@ io.on("connection", (socket) => {
 
     // Makes search when data is received and send back respond
     amazonSearch(socket, browser);
+
+    // Disconnect log
+    socket.on("disconnect", () => {
+        console.log("user disconnected: ", socket.id);
+    });
 });
 
 // Deploy server
