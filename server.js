@@ -1,22 +1,16 @@
 import express from "express";
 import cors from "cors";
-import getPagesAvgPrice from "./lib/puppeteer/getPagesAvgPrice.js";
 import puppeteer from "puppeteer";
 import http from "http";
 import { Server } from "socket.io";
+import baseRouter from "./routes/base.js";
+import refresh from "./lib/socket_io/refresh.js";
+import amazonSearch from "./lib/socket_io/amazonSearch.js";
 
 //Initialization
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-
-// Launch browser and page
-const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-});
-
-// Heroku Port
-const PORT = process.env.PORT || 3000;
+const io = new Server(server, { cors: { origin: "*" } });
 
 // Allow cross-origin-connections on get requests
 app.use(
@@ -26,77 +20,24 @@ app.use(
     })
 );
 
-// Check whether the server is active
-app.get("/", (_req, res) => {
-    res.send("server is running");
+app.use("/", baseRouter);
+
+// Launch headless browser
+const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
 });
 
-// For easy testing
-app.get("/:maxPages/:search", async (req, res) => {
-    const { search, maxPages } = req.params;
+// Heroku Port
+const PORT = process.env.PORT || 5000;
 
-    try {
-        // Check wether the max page number is valid
-        if (!parseInt(maxPages) || parseInt(maxPages) < 0) {
-            res.status(300).json({
-                message: "Max page should be a positive number",
-            });
-            return;
-        }
-
-        // Calculate average price
-        const page = await browser.newPage();
-
-        const averagePrice = await getPagesAvgPrice(
-            page,
-            search,
-            parseInt(maxPages)
-        );
-        await page.close();
-        res.json({ message: "Yay", averagePrice });
-        return;
-    } catch (e) {
-        console.log(e);
-        res.json({
-            message: "Either no product for search or server error",
-        });
-        return;
-    }
-});
-
-// 404 links
-app.get("*", (_req, res) => {
-    res.status(404).json({ message: "Not available" });
-});
-
+// On successful socket connection
 io.on("connection", (socket) => {
-    console.log("a user connected");
+    console.log("user connected: ", socket.id);
     // Keeps connection alive
-    socket.on("refresh", (response) => {});
+    refresh(socket);
 
-    // Make search when data is received
-    socket.on("amazon-search", async ({ search, maxPages }) => {
-        try {
-            // Calculate average
-            const page = await browser.newPage();
-            const averagePrice = await getPagesAvgPrice(
-                page,
-                search,
-                parseInt(maxPages)
-            );
-            await page.close();
-
-            // Send back success results
-            socket.emit("average-price", { averagePrice });
-        } catch (e) {
-            console.log(e);
-
-            // Send back error results
-            socket.emit("average-price", {
-                message: "Either no product for search or server error",
-            });
-        }
-    });
+    // Makes search when data is received and send back respond
+    amazonSearch(socket, browser);
 });
 
 // Deploy server
