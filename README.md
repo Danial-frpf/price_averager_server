@@ -1,6 +1,6 @@
 ### Price Averager Server
 
-    NodeJs bot that returns average price of amazon searches.
+NodeJs bot that returns average price of amazon searches.
 
 ## Setup
 
