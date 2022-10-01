@@ -7,7 +7,11 @@ NodeJs bot that returns average price of amazon searches.
 1. Download source code for server using link.
 2. Open terminal in folder containing package.json.
 3. Run command:
-   npm install
+
+```
+npm install
+```
+
 4. Run command:
    npm run dev
 5. Server runs on "http://localhost:5000".
